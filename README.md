@@ -13,7 +13,7 @@ Also while almost all resulting combinations are going to be impossible, the ind
 ## Features
 
 - System "information" for: operating system, host device, window manager, CPU, GPU and more! With a fresh selection of randomly picked entries for each run!
-- Actual username and hostname displayed at the top; Since the information "definitely" blongs to your system.
+- Actual username and hostname displayed at the top; Since the information "definitely" belongs to your system.
 - A nice (as nice as i could find) looking logo of the chosen operating system displayed using the kitty terminal graphics protocol! (if your terminal of choice supoorts it)
 - With more to come... if i have the time and energy.
 
