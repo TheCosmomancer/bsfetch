@@ -8,10 +8,8 @@ TO_PRINT = {
     'TempleOS',
     'UwUntu',
     'Red Star OS',
-    'Suicide Linux',
     'PonyOS',
     'Debian GNU/Hurd',
-    'Collapse OS',
     'Plan 9',
     'Inferno',
     'Haiku',
@@ -192,6 +190,15 @@ def get_user_host_name():
     username = getuser()
     hostname = gethostname()
     return f'{username}@{hostname}'
+def get_logo (name):
+    from os.path import join, basename
+    from glob import glob
+    def _filename_format (name):
+        return name.replace(' ', '').replace('/', '').replace('(', '').replace(')', '').lower()
+    name = _filename_format(name)
+    filename = glob(join(__file__.strip(basename(__file__)), 'logo/')+name+'*')
+    return filename[0]
+    
 if __name__ == '__main__':
     from random import choice
     username_AT_networking_host_name = get_user_host_name()
