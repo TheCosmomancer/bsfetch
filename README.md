@@ -1,6 +1,6 @@
 # Fetch BS system information (because why not)
 
-bsfetch is a fun program for displaying satire system information. Despite that, the software and hardware mentioned here is (for the most part) real and technically usable. Go take a look for yourself.
+bsfetch is a fun program for displaying satirical system information. Despite that, the individual software and hardware mentioned here are (for the most part) real and technically usable; however most resulting combinations are going to be impossible.
 
 ## Usage
 Just clone the repo with:
