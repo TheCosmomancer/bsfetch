@@ -1,4 +1,4 @@
-TO_PRINT = {
+SELECTION = {
 'OS' : [
     'AmogOS',
     'Windows 9 Professional',
@@ -184,25 +184,169 @@ TO_PRINT = {
     'yuw_PG',
 ]
 }
+
 def get_user_host_name():
+
     from getpass import getuser
     from  socket import gethostname
-    username = getuser()
-    hostname = gethostname()
-    return f'{username}@{hostname}'
-def get_logo (name):
-    from os.path import join, basename
+
+    return f'{getuser()}@{gethostname()}'
+
+
+def get_logo(name, max_width, max_height):
+
+    def _get_logo_path(name):
+
+        def _filename_format(name):
+
+            return (
+                name.replace(' ', '')
+                .replace('/', '')
+                .replace('(', '')
+                .replace(')', '')
+                .lower()
+            )
+
+        filename_path = (
+            join(__file__.strip(basename(__file__)), 'logo/')
+            + _filename_format(name)
+            + '*'
+        )
+
+        return glob(filename_path)[0]
+    
+    def _calculate_size(img_width, img_height, max_width, max_height):
+
+        def _get_cell_size():
+            from array import array
+            from fcntl import ioctl
+            from sys import stdout
+            from termios import TIOCGWINSZ
+
+            buf = array('H', [0, 0, 0, 0])
+            try:
+                ioctl(stdout.fileno(), TIOCGWINSZ, buf)
+                rows, cols, xpixels, ypixels = buf
+                if xpixels > 0 and ypixels > 0 and cols > 0 and rows > 0:
+                    return xpixels / cols, ypixels / rows
+            except Exception:
+                pass
+
+            # Fallback: Default terminal cell aspect ratio (1 cell is roughly 10px wide x 20px high)
+            return 10.0, 20.0
+    
+        cell_w, cell_h = _get_cell_size()
+        max_width_px = max_width * cell_w
+        max_height_px = max_height * cell_h
+        scale = min(max_width_px / img_width, max_height_px / img_height)
+        render_w = img_width * scale
+        render_h = img_height * scale
+        final_width = max(1, round(render_w / cell_w))
+        final_height = max(1, round(render_h / cell_h))
+
+        return final_width, final_height
+    
+    from base64 import b64encode
+    from io import BytesIO
     from glob import glob
-    def _filename_format (name):
-        return name.replace(' ', '').replace('/', '').replace('(', '').replace(')', '').lower()
-    name = _filename_format(name)
-    filename = glob(join(__file__.strip(basename(__file__)), 'logo/')+name+'*')
-    return filename[0]
+    from os.path import basename, join
+    from cairosvg import svg2png
+    from PIL import Image
+    
+    name = _get_logo_path(name)
+
+    if name[-4:].lower() == '.svg':
+        png = svg2png(url=str(name))
+        img = Image.open(BytesIO(png))
+    else:
+        img = Image.open(name)
+
+    img = img.convert('RGBA')
+    img_width, img_height = img.size
+
+    final_width, final_height = _calculate_size(img_width, img_height, max_width, max_height)
+
+    out = BytesIO()
+    img.save(out, format='PNG')
+
+    return b64encode(out.getvalue()).decode(), final_width, final_height
+
+def supports_kitty_graphics():
+    
+    from os import read, write
+    from sys import stdin, stdout
+    from termios import tcgetattr, tcsetattr, TCSADRAIN
+    from tty import setcbreak
+    from select import select
+
+    timeout=0.1
+
+    if not stdout.isatty() or not stdin.isatty():
+        return False
+
+    # Kitty graphics capability query
+    query = b'\033_Gi=1,a=q;\033\\'
+
+    fd = stdin.fileno()
+    old = tcgetattr(fd)
+
+    try:
+        setcbreak(fd)
+        write(stdout.fileno(), query)
+        stdout.flush()
+
+        if select([stdin], [], [], timeout)[0]:
+            response = read(fd, 1024)
+            return b'\033_G' in response
+    finally:
+        tcsetattr(fd, TCSADRAIN, old)
+
+    return False
+def test():
+
+    from random import choice
+    from time import sleep
+    
+    TO_PRINT = {key: choice(SELECTION[key]) for key in SELECTION.keys()}
+    for os in SELECTION['OS']:
+        TO_PRINT['OS']= os
+        username_AT_networking_host_name = get_user_host_name()
+        if supports_kitty_graphics():
+            max_width = 25
+            max_height= 9
+            logo, final_width, final_height = get_logo(TO_PRINT['OS'], max_width, max_height)
+            print(f'\033_Ga=T,f=100,c={final_width},r={final_height};{logo}\033\\', end='')
+            print(f'\033[{final_height}A', end='')
+            PRINT_PREFIX = f'\033[{final_width+2}C'
+        else:
+            PRINT_PREFIX = ''
+        print()
+        print(PRINT_PREFIX + username_AT_networking_host_name)
+        print(PRINT_PREFIX + ('-'*len(username_AT_networking_host_name)))
+        for key in TO_PRINT.keys():
+            print(f'{PRINT_PREFIX}{key}: {TO_PRINT[key]}')
+        if TO_PRINT['OS'] != SELECTION['OS'][-1]:
+            sleep(1)
+def main():
+    
+    from random import choice
+
+    TO_PRINT = {key: choice(SELECTION[key]) for key in SELECTION.keys()}
+    username_AT_networking_host_name = get_user_host_name()
+    if supports_kitty_graphics():
+        max_width = 25
+        max_height= 9
+        logo, final_width, final_height = get_logo(TO_PRINT['OS'], max_width, max_height)
+        print(f'\033_Ga=T,f=100,c={final_width},r={final_height};{logo}\033\\', end='')
+        print(f'\033[{final_height}A', end='')
+        PRINT_PREFIX = f'\033[{final_width+2}C'
+    else:
+        PRINT_PREFIX = ''
+    print()
+    print(PRINT_PREFIX + username_AT_networking_host_name)
+    print(PRINT_PREFIX + ('-'*len(username_AT_networking_host_name)))
+    for key in TO_PRINT.keys():
+        print(f'{PRINT_PREFIX}{key}: {TO_PRINT[key]}')
     
 if __name__ == '__main__':
-    from random import choice
-    username_AT_networking_host_name = get_user_host_name()
-    print(username_AT_networking_host_name)
-    print('-'*len(username_AT_networking_host_name))
-    for key in TO_PRINT.keys():
-        print(f'{key}: {choice(TO_PRINT[key])}')
+    test()
