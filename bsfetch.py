@@ -1,7 +1,6 @@
 SELECTION = {
 'OS' : [
     'AmogOS',
-    'Windows 9 Professional',
     'Nyarch Linux',
     'Hannah Montana Linux',
     'Justin Bieber Linux',
@@ -56,7 +55,6 @@ SELECTION = {
     'Cosmo Communicator',
     'Palm Foleo',
     'ClockworkPi DevTerm',
-    'Teledyne LeCroy WaveRunner 9404 oscilloscope',
     'Xiaomi Pad 5',
     'POCO F3',
     'Linksys WRT54G Router',
@@ -188,7 +186,7 @@ SELECTION = {
 def get_user_host_name():
 
     from getpass import getuser
-    from  socket import gethostname
+    from socket import gethostname
 
     return f'{getuser()}@{gethostname()}'
 
@@ -349,4 +347,4 @@ def main():
         print(f'{PRINT_PREFIX}{key}: {TO_PRINT[key]}')
     
 if __name__ == '__main__':
-    test()
+    main()
