@@ -15,6 +15,7 @@ Also while almost all resulting combinations are going to be impossible, the ind
 - System "information" for: operating system, host device, window manager, CPU, GPU and more! With a fresh selection of randomly picked entries for each run!
 - Actual username and hostname displayed at the top; Since the information "definitely" belongs to your system.
 - A nice (as nice as i could find) looking logo of the chosen operating system displayed using the kitty terminal graphics protocol! (if your terminal of choice supoorts it)
+- colored text output for more eye candy, if you're into that stuff.
 - With more to come... if i have the time and energy.
 
 ## Usage
@@ -44,7 +45,7 @@ python bsfetch.py
 - [x] Add a decent amount of entries for the basic catagories
 - [x] Add actual username and hostname at the top
 - [x] Add logos via the kitty terminal graphics protocol
-- [ ] Color the text being prinnted
+- [X] Color the text being printed
 - [ ] Add more catagories
 - [ ] migrate to a "better" language (probably rust) ?
 

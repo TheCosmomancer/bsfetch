@@ -20,6 +20,7 @@
                 (python314.withPackages (pypkgs: with pypkgs; [
                     pillow
                     cairosvg
+                    colorama
                 ]))    
             ];
 

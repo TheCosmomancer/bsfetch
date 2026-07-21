@@ -1,2 +1,3 @@
 Pillow>=12.3.0
 CairoSVG>=2.9.0
+Colorama>=0.4.6

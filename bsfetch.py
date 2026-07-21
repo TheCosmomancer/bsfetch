@@ -188,7 +188,7 @@ def get_user_host_name():
     from getpass import getuser
     from socket import gethostname
 
-    return f'{getuser()}@{gethostname()}'
+    return getuser(), gethostname()
 
 
 def get_logo(name, max_width, max_height):
@@ -241,8 +241,10 @@ def get_logo(name, max_width, max_height):
         render_h = img_height * scale
         final_width = max(1, round(render_w / cell_w))
         final_height = max(1, round(render_h / cell_h))
+        padding = int((max_height - final_height) / 2) if final_height < max_height else 0
+        padding = padding + 1 if padding >= max_height//3 else padding
 
-        return final_width, final_height
+        return final_width, final_height, padding
     
     from base64 import b64encode
     from io import BytesIO
@@ -262,12 +264,12 @@ def get_logo(name, max_width, max_height):
     img = img.convert('RGBA')
     img_width, img_height = img.size
 
-    final_width, final_height = _calculate_size(img_width, img_height, max_width, max_height)
+    final_width, final_height, padding = _calculate_size(img_width, img_height, max_width, max_height)
 
     out = BytesIO()
     img.save(out, format='PNG')
 
-    return b64encode(out.getvalue()).decode(), final_width, final_height
+    return b64encode(out.getvalue()).decode(), final_width, final_height, padding
 
 def supports_kitty_graphics():
     
@@ -311,15 +313,16 @@ def test():
         username_AT_networking_host_name = get_user_host_name()
         if supports_kitty_graphics():
             max_width = 25
-            max_height= 9
-            logo, final_width, final_height = get_logo(TO_PRINT['OS'], max_width, max_height)
+            max_height= 10
+            logo, final_width, final_height, padding = get_logo(TO_PRINT['OS'], max_width, max_height)
+            print('\n' * padding, end='')
             print(f'\033_Ga=T,f=100,c={final_width},r={final_height};{logo}\033\\', end='')
-            print(f'\033[{final_height}A', end='')
+            print(f'\033[{final_height + padding}A', end='')
             PRINT_PREFIX = f'\033[{final_width+2}C'
         else:
             PRINT_PREFIX = ''
         print()
-        print(PRINT_PREFIX + username_AT_networking_host_name)
+        print(PRINT_PREFIX + username_AT_networking_host_name[0] + '@' + username_AT_networking_host_name[1])
         print(PRINT_PREFIX + ('-'*len(username_AT_networking_host_name)))
         for key in TO_PRINT.keys():
             print(f'{PRINT_PREFIX}{key}: {TO_PRINT[key]}')
@@ -327,24 +330,58 @@ def test():
             sleep(1)
 def main():
     
+    from argparse import ArgumentParser
     from random import choice
+    import colorama
+    from colorama import Fore
 
+    parser = ArgumentParser('bsfetch')
+    parser.add_argument('-c', '--color', help='Colors output text. one of "RED", "BLUE", "GREEN", "YELLOW", "MAGENTA" or "CYAN"')
+    logogroup = parser.add_mutually_exclusive_group()
+    logogroup.add_argument('-l', '--logo', action='store_true', help='Forces the display of the OS logo. Requires a terminal that supports the kitty graphics protocol to function properly.')
+    logogroup.add_argument('-L', '--no-logo', action='store_true', help='Disables the display of the OS logo.')
+    
+    args = parser.parse_args()
+    
+    if args.color:
+        colorama.init()
+        COLOR_SUFFIX = Fore.RESET
+        match args.color.upper():
+            case 'RED':
+                COLOR_PREFIX = Fore.RED
+            case 'BLUE':
+                COLOR_PREFIX = Fore.BLUE
+            case 'GREEN':
+                COLOR_PREFIX = Fore.GREEN
+            case 'YELLOW':
+                COLOR_PREFIX = Fore.YELLOW
+            case 'MAGENTA':
+                COLOR_PREFIX = Fore.MAGENTA
+            case 'CYAN':
+                COLOR_PREFIX = Fore.CYAN
+            case _:
+                print('Invalid color. Choose one of "RED", "BLUE", "GREEN", "YELLOW", "MAGENTA" or "CYAN"')
+                exit(1)
+    else:
+        COLOR_PREFIX = ''
+        COLOR_SUFFIX = ''
     TO_PRINT = {key: choice(SELECTION[key]) for key in SELECTION.keys()}
     username_AT_networking_host_name = get_user_host_name()
-    if supports_kitty_graphics():
+    if not args.no_logo and (args.logo or supports_kitty_graphics()):
         max_width = 25
-        max_height= 9
-        logo, final_width, final_height = get_logo(TO_PRINT['OS'], max_width, max_height)
+        max_height= 10
+        logo, final_width, final_height, padding = get_logo(TO_PRINT['OS'], max_width, max_height)
+        print('\n' * padding, end='')
         print(f'\033_Ga=T,f=100,c={final_width},r={final_height};{logo}\033\\', end='')
-        print(f'\033[{final_height}A', end='')
+        print(f'\033[{final_height + padding}A', end='')
         PRINT_PREFIX = f'\033[{final_width+2}C'
     else:
         PRINT_PREFIX = ''
     print()
-    print(PRINT_PREFIX + username_AT_networking_host_name)
-    print(PRINT_PREFIX + ('-'*len(username_AT_networking_host_name)))
+    print(PRINT_PREFIX + COLOR_PREFIX + username_AT_networking_host_name[0] + COLOR_SUFFIX + '@' + COLOR_PREFIX + username_AT_networking_host_name[1] + COLOR_SUFFIX)
+    print(PRINT_PREFIX + ('-'*(len(username_AT_networking_host_name[0]+username_AT_networking_host_name[1])+1)))
     for key in TO_PRINT.keys():
-        print(f'{PRINT_PREFIX}{key}: {TO_PRINT[key]}')
+        print(f'{PRINT_PREFIX}{COLOR_PREFIX}{key}{COLOR_SUFFIX}: {TO_PRINT[key]}')
     
 if __name__ == '__main__':
     main()
