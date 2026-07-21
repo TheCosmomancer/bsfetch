@@ -242,7 +242,6 @@ def get_logo(name, max_width, max_height):
         final_width = max(1, round(render_w / cell_w))
         final_height = max(1, round(render_h / cell_h))
         padding = int((max_height - final_height) / 2) if final_height < max_height else 0
-        padding = padding + 1 if padding >= max_height//3 else padding
 
         return final_width, final_height, padding
     
