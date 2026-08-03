@@ -1,28 +1,84 @@
 SELECTION = {
 'OS' : [
+    'ALT Linux',
+    'Accessible-Coconut',
     'AmogOS',
-    'Nyarch Linux',
-    'Hannah Montana Linux',
-    'Justin Bieber Linux',
-    'TempleOS',
-    'UwUntu',
-    'Red Star OS',
-    'PonyOS',
-    'Debian GNU/Hurd',
-    'Plan 9',
-    'Inferno',
-    'Haiku',
-    'Damn Small Linux',
-    'GoboLinux',
-    'Fatdog64',
-    'Kiss Linux',
-    'Source Mage GNU/Linux',
-    'Venom Linux',
     'Arch Linux (btw)',
+    'ArchBang Linux',
+    'Archman Linux',
+    'Axle',
+    'BrOS',
+    'Damn Small Linux',
+    'Daphile',
+    'Debian Edu/Skolelinux',
+    'Debian GNU/Hurd',
+    'DietPi',
+    'Dragora GNU/Linux-Libre',
+    'Drauger OS',
+    'Droidian',
+    'EasyOS',
+    'Edubuntu',
     'Exherbo',
-    'OpenIndiana',
+    'Fatdog64',
+    'FunOS',
+    'GalliumOS',
+    'GoboLinux',
+    'Haiku',
+    'Hannah Montana Linux',
+    'HydraPWK',
+    'IPFire',
     'Illumos',
+    'Inferno',
+    'Justin Bieber Linux',
+    'KANOTIX',
+    'Kaisen Linux',
+    'Kamuriki Linux/GNU/X',
+    'Karoshi',
+    'Kiss Linux',
     'KolibriOS',
+    'Lakka',
+    'Lilidog',
+    'LindowsOS',
+    'Linux From Scratch',
+    'Linux Kamarada',
+    'LinuxCNC',
+    'Loc-OS Linux',
+    'Mobian',
+    'NeoKylin',
+    'NomadBSD',
+    'Nyarch Linux',
+    'OpenBSD',
+    'OpenIndiana',
+    'Oracle Linux',
+    'Peppermint OS',
+    'Photon OS',
+    'Pisi GNU/Linux',
+    'Plan 9',
+    'Planeta Tecno OS',
+    'PonyOS',
+    'Porteus',
+    'Porteus Kiosk',
+    'Puppy Linux',
+    'ReactOS',
+    'Red Star OS',
+    'Rhino Linux',
+    'Slax',
+    'Snal Linux',
+    'Source Mage GNU/Linux',
+    'Sparky Linux',
+    'Spiral Linux',
+    'Starbuntu',
+    'Static Linux',
+    'TROMjaro',
+    'TempleOS',
+    'Tsurugi Linux',
+    'Univention Corporate Server',
+    'Uruk GNU/Linux-libre',
+    'UwUntu',
+    'Vendefoul Wolf Linux',
+    'Venom Linux',
+    'Wind River Linux',
+    'ZimaOS'
     ],
 'Host' : [
     'Samsung Family Hub Smart Refrigerator',
@@ -196,22 +252,16 @@ def get_logo(name, max_width, max_height):
     def _get_logo_path(name):
 
         def _filename_format(name):
+            
+            # C-accelerated character removal
+            return name.lower().translate(str.maketrans('', '', ' /()-'))
+        
+        from os.path import join, dirname, abspath
 
-            return (
-                name.replace(' ', '')
-                .replace('/', '')
-                .replace('(', '')
-                .replace(')', '')
-                .lower()
-            )
+        LOGO_DIR = join(dirname(abspath(__file__)), 'logo')
+        
+        return join(LOGO_DIR, f"{_filename_format(name)}.png")
 
-        filename_path = (
-            join(__file__.strip(basename(__file__)), 'logo/')
-            + _filename_format(name)
-            + '*'
-        )
-
-        return glob(filename_path)[0]
     
     def _calculate_size(img_width, img_height, max_width, max_height):
 
@@ -227,7 +277,7 @@ def get_logo(name, max_width, max_height):
                 rows, cols, xpixels, ypixels = buf
                 if xpixels > 0 and ypixels > 0 and cols > 0 and rows > 0:
                     return xpixels / cols, ypixels / rows
-            except Exception:
+            except:
                 pass
 
             # Fallback: Default terminal cell aspect ratio (1 cell is roughly 10px wide x 20px high)
@@ -246,29 +296,26 @@ def get_logo(name, max_width, max_height):
         return final_width, final_height, padding
     
     from base64 import b64encode
-    from io import BytesIO
-    from glob import glob
-    from os.path import basename, join
-    from cairosvg import svg2png
-    from PIL import Image
+    from struct import unpack
     
     name = _get_logo_path(name)
 
-    if name[-4:].lower() == '.svg':
-        png = svg2png(url=str(name))
-        img = Image.open(BytesIO(png))
-    else:
-        img = Image.open(name)
+    # Read binary file directly
+    with open(name, 'rb') as f:
+        data = f.read()
 
-    img = img.convert('RGBA')
-    img_width, img_height = img.size
+    # Instant PNG header dimension extraction (offset 16-24)
+    if not data.startswith(b'\x89PNG\r\n\x1a\n'):
+        raise ValueError(f"File at '{name}' is not a valid PNG image.")
+    
+    img_width, img_height = unpack('>II', data[16:24])
 
     final_width, final_height, padding = _calculate_size(img_width, img_height, max_width, max_height)
 
-    out = BytesIO()
-    img.save(out, format='PNG')
+    # Direct Base64 encoding
+    b64_logo = b64encode(data).decode('ascii')
 
-    return b64encode(out.getvalue()).decode(), final_width, final_height, padding
+    return b64_logo, final_width, final_height, padding
 
 def supports_kitty_graphics():
     
@@ -301,47 +348,64 @@ def supports_kitty_graphics():
         tcsetattr(fd, TCSADRAIN, old)
 
     return False
-def test():
 
-    from random import choice
-    from time import sleep
-    
-    TO_PRINT = {key: choice(SELECTION[key]) for key in SELECTION.keys()}
-    for os in SELECTION['OS']:
-        TO_PRINT['OS']= os
-        username_AT_networking_host_name = get_user_host_name()
-        if supports_kitty_graphics():
-            max_width = 25
-            max_height= 10
-            logo, final_width, final_height, padding = get_logo(TO_PRINT['OS'], max_width, max_height)
-            print('\n' * padding, end='')
-            print(f'\033_Ga=T,f=100,c={final_width},r={final_height};{logo}\033\\', end='')
-            print(f'\033[{final_height + padding}A', end='')
-            PRINT_PREFIX = f'\033[{final_width+2}C'
-        else:
-            PRINT_PREFIX = ''
-        print()
-        print(PRINT_PREFIX + username_AT_networking_host_name[0] + '@' + username_AT_networking_host_name[1])
-        print(PRINT_PREFIX + ('-'*len(username_AT_networking_host_name)))
-        for key in TO_PRINT.keys():
-            print(f'{PRINT_PREFIX}{key}: {TO_PRINT[key]}')
-        if TO_PRINT['OS'] != SELECTION['OS'][-1]:
-            sleep(1)
+def run(TO_PRINT, username_AT_networking_host_name, COLOR_PREFIX,
+            COLOR_SUFFIX, DISPLAY_LOGO, max_width, max_height):
+
+    if DISPLAY_LOGO:
+        logo, final_width, final_height, padding = get_logo(TO_PRINT['OS'], max_width, max_height)
+        print('\n' * padding, end='')
+        print(f'\033_Ga=T,f=100,c={final_width},r={final_height};{logo}\033\\', end='')
+        print(f'\033[{final_height + padding}A', end='')
+        PRINT_PREFIX = f'\033[{final_width+1}C'
+    else:
+        PRINT_PREFIX = ''
+
+    print()
+    print(PRINT_PREFIX + COLOR_PREFIX + username_AT_networking_host_name[0] + COLOR_SUFFIX + '@' + COLOR_PREFIX + username_AT_networking_host_name[1] + COLOR_SUFFIX)
+    print(PRINT_PREFIX + ('-'*(len(username_AT_networking_host_name[0]+username_AT_networking_host_name[1])+1)))
+    for key in TO_PRINT.keys():
+        print(f'{PRINT_PREFIX}{COLOR_PREFIX}{key}{COLOR_SUFFIX}: {TO_PRINT[key]}')
+
 def main():
-    
-    from argparse import ArgumentParser
+    from sys import exit
     from random import choice
+    from argparse import ArgumentParser
     import colorama
     from colorama import Fore
 
     parser = ArgumentParser('bsfetch')
-    parser.add_argument('-c', '--color', help='Colors output text. one of "RED", "BLUE", "GREEN", "YELLOW", "MAGENTA" or "CYAN"')
+    parser.add_argument('-c', '--color', help='Colors output text. one of "RED", "BLUE", "GREEN", "YELLOW", "MAGENTA" or "CYAN".')
+    parser.add_argument('-W', '--width', type=int, help = 'Set the max width of the OS logo in cells (1cell = ~10px).')
+    parser.add_argument('-H', '--height', type=int, help = 'Set the max height of the OS logo in cells (1cell = ~20px).')
     logogroup = parser.add_mutually_exclusive_group()
     logogroup.add_argument('-l', '--logo', action='store_true', help='Forces the display of the OS logo. Requires a terminal that supports the kitty graphics protocol to function properly.')
     logogroup.add_argument('-L', '--no-logo', action='store_true', help='Disables the display of the OS logo.')
+    parser.add_argument('-t', '--test', help=f'Provide a key to print all entries from (intended for testing purposes). Possible values: {", ".join(SELECTION.keys())}.')
+    parser.add_argument('-s','--set', help=f'Set the value of the key provided by test to a specific value. For operating systems, either use alongside -L or one of:{", ".join(SELECTION["OS"])}.')
     
     args = parser.parse_args()
     
+    if args.test is not None:
+        if args.test not in SELECTION.keys():
+            print(f'Invalid test key. Possible values: {", ".join(SELECTION.keys())}.')
+            exit(1)
+
+        if args.set is not None and args.test == 'OS' and args.set not in SELECTION['OS'] and not args.no_logo:
+
+            print(f'Invalid value for test key. Possible values: {", ".join(SELECTION['OS'])}.')
+            exit(1)
+
+    if args.width is not None:
+        if args.width <= 0:
+            print('Invalid width. Must be greater than 0.')
+            exit(1)
+    
+    if args.height is not None:
+        if args.height <= 0:
+            print('Invalid height. Must be greater than 0.')
+            exit(1)
+            
     if args.color:
         colorama.init()
         COLOR_SUFFIX = Fore.RESET
@@ -364,23 +428,45 @@ def main():
     else:
         COLOR_PREFIX = ''
         COLOR_SUFFIX = ''
-    TO_PRINT = {key: choice(SELECTION[key]) for key in SELECTION.keys()}
     username_AT_networking_host_name = get_user_host_name()
-    if not args.no_logo and (args.logo or supports_kitty_graphics()):
-        max_width = 25
-        max_height= 10
-        logo, final_width, final_height, padding = get_logo(TO_PRINT['OS'], max_width, max_height)
-        print('\n' * padding, end='')
-        print(f'\033_Ga=T,f=100,c={final_width},r={final_height};{logo}\033\\', end='')
-        print(f'\033[{final_height + padding}A', end='')
-        PRINT_PREFIX = f'\033[{final_width+2}C'
+    max_width = args.width if args.width is not None else 999
+    max_height= args.height if args.height is not None else len(SELECTION) + 2
+    DISPLAY_LOGO = not args.no_logo and (args.logo or supports_kitty_graphics())
+    if args.test is None:
+
+        TO_PRINT = {key: choice(SELECTION[key]) for key in SELECTION.keys()}
+
+        run(
+            TO_PRINT=TO_PRINT, username_AT_networking_host_name=username_AT_networking_host_name, COLOR_PREFIX=COLOR_PREFIX,
+            COLOR_SUFFIX=COLOR_SUFFIX, DISPLAY_LOGO=DISPLAY_LOGO, max_width=max_width, max_height=max_height
+        )
+
     else:
-        PRINT_PREFIX = ''
-    print()
-    print(PRINT_PREFIX + COLOR_PREFIX + username_AT_networking_host_name[0] + COLOR_SUFFIX + '@' + COLOR_PREFIX + username_AT_networking_host_name[1] + COLOR_SUFFIX)
-    print(PRINT_PREFIX + ('-'*(len(username_AT_networking_host_name[0]+username_AT_networking_host_name[1])+1)))
-    for key in TO_PRINT.keys():
-        print(f'{PRINT_PREFIX}{COLOR_PREFIX}{key}{COLOR_SUFFIX}: {TO_PRINT[key]}')
+
+        if args.set is None:
     
+            from time import sleep
+
+            for test_item in SELECTION[args.test]:
+
+                TO_PRINT = {key: choice(SELECTION[key]) if key != args.test else test_item for key in SELECTION.keys()}
+
+                run(
+                    TO_PRINT=TO_PRINT, username_AT_networking_host_name=username_AT_networking_host_name, COLOR_PREFIX=COLOR_PREFIX,
+                    COLOR_SUFFIX=COLOR_SUFFIX, DISPLAY_LOGO=DISPLAY_LOGO, max_width=max_width, max_height=max_height
+                )
+                sleep(1)
+        
+        else:
+
+            TO_PRINT = {key: choice(SELECTION[key]) if key != args.test else args.set for key in SELECTION.keys()}
+
+            run(
+                TO_PRINT=TO_PRINT, username_AT_networking_host_name=username_AT_networking_host_name, COLOR_PREFIX=COLOR_PREFIX,
+                COLOR_SUFFIX=COLOR_SUFFIX, DISPLAY_LOGO=DISPLAY_LOGO, max_width=max_width, max_height=max_height
+            )
+    
+    return 0
+
 if __name__ == '__main__':
     main()
