@@ -1,4 +1,4 @@
-# bsfetch — Fetch BS system information (because why not)
+# bsfetch - Fetch BS system information (because why not)
 
 ![](example.png)
 
@@ -16,38 +16,97 @@ Also while almost all resulting combinations are going to be impossible, the ind
 - Actual username and hostname displayed at the top; Since the information "definitely" belongs to your system.
 - A nice (as nice as i could find) looking logo of the chosen operating system displayed using the kitty terminal graphics protocol! (if your terminal of choice supoorts it)
 - colored text output for more eye candy, if you're into that stuff.
-- With more to come... if i have the time and energy.
 
-## Usage
+## Installation
 
-### Clone the repo
-```bash
-git clone https://github.com/thecosmomancer/bsfetch.git
+### NixOS
+
+#### Add bsfetch as a flake input
+
+In your system flake's `flake.nix`, add bsfetch to `inputs`:
+
+```nix
+inputs = {
+  nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  bsfetch.url = "github:thecosmomancer/bsfetch";
+  ...
+};
 ```
 
-### Install the pypi packages using pip
+#### Import the module in your NixOS configuration
+
+Pass `bsfetch` through to your modules (e.g. via `specialArgs` if using
+flakes directly, or however your setup threads flake inputs to modules),
+then import it alongside your other modules:
+
+```nix
+outputs = { self, nixpkgs, ... }@inputs: {
+  nixosConfigurations.yourhostname = nixpkgs.lib.nixosSystem {
+    system = "x86_64-linux";
+    modules = [
+      ./configuration.nix
+      inputs.bsfetch.nixosModules.default
+      # ...your other modules
+    ];
+  };
+};
+```
+
+#### Add the package in your system configuration
+
+Add it to your system packages inside ```environment.systemPackages``` or to your user packages using [home-manager](https://github.com/nix-community/home-manager) by adding it inside of ```home.packages```.
+
+### Other distros
+
+#### Clone the repo
+```bash
+git clone https://github.com/thecosmomancer/bsfetch.git
+cd bsfetch
+```
+
+#### Install python3 and the required packages
 ```bash
 pip install -r requirements.txt
 ```
+or using your distro's package manager if global python packages are manged by your distro's package manager.
 
-### Or use the nix flake instead
+#### Run the setup script:
+```bash
+./setup.sh
+```
+#### If the setup script is not executable:
+```bash
+bash setup.sh
+```
+
+## Usage
+
+```bash
+bsfetch -c {color} -W {max-width} -H {max-height}
+```
+The logo iamge can also explicitly enable with `-l` (requires a terminal that supports the kitty terminal graphics protocol) or disabled with `-L`.
+
+## Development
+
+Besides the main bsfetch.py file, there is also a convert_logo.py script that can be used to convert the logos in the unrefined_logo directory into PNGs that can be used by bsfetch.
+
+### NixOS
+
+use the devshell provided by the flake:
+
 ```bash
 nix develop
 ```
+This sets the environment variable for the logo directory to the correct path. Python packages needed for using both bsfetch and convert_logo are also included.
 
-### Run with python
+### Other distros
+
+Intall the python packages listed in requirements.txt as well as those used by convert_logo (if needed) using your preferred way of installing python packages.
+
+Then set the BSFETCH_LOGO_DIR environment variable to the path of the logo directory before running bsfetch:
 ```bash
-python bsfetch.py
+export BSFETCH_LOGO_DIR=/path/to/logo
 ```
-
-## Goals
-
-- [x] Add a decent amount of entries for the basic catagories
-- [x] Add actual username and hostname at the top
-- [x] Add logos via the kitty terminal graphics protocol
-- [X] Color the text being printed
-- [ ] Add more catagories
-- [ ] migrate to a "better" language (probably rust) ?
 
 ## License
 
