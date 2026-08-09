@@ -26,9 +26,12 @@
           bsfetch = pkgs.symlinkJoin {
             name = "bsfetch";
             paths = [ bsfetchBin ];
+            nativeBuildInputs = [ pkgs.makeWrapper ];
             postBuild = ''
-              mkdir -p $out/share/bsfetch/logo
-              cp ${./logo}/* $out/share/bsfetch/logo
+              mkdir -p $out/share/logo
+              cp ${./logo}/* $out/share/logo
+              wrapProgram $out/bin/bsfetch \
+                --set BSFETCH_LOGO_DIR $out/share/logo
             '';
           };
           default = self.packages.${system}.bsfetch;
